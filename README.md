@@ -58,3 +58,8 @@ Lecturers and students can share `FunToast.html` directly via:
 - **Vanilla JavaScript:** Game loop, procedural stage rendering, score calculations, timer, and state machine.
 - **Web Audio API:** Real-time waveform audio synthesis.
 - **Inline SVG:** Scalable, responsive character avatars and mascot art.
+
+---
+
+## 👤 Author
+Developed with ❤️ by **Ashutosh-G**

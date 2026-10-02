@@ -1,0 +1,1422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>FunToast - The Polytechnic Survival Game</title>
+<style>
+  :root {
+    --bg-primary: #121826;
+    --bg-card: #1f293d;
+    --bg-card-hover: #29354d;
+    --accent-yellow: #fcd34d;
+    --accent-orange: #f97316;
+    --accent-green: #10b981;
+    --accent-red: #ef4444;
+    --accent-blue: #38bdf8;
+    --accent-purple: #a855f7;
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+    --toast-crust: #854d0e;
+    --toast-body: #fbbf24;
+    --font-stack: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    background: radial-gradient(circle at 50% 20%, #1e293b 0%, #0f172a 100%);
+    font-family: var(--font-stack);
+    color: var(--text-main);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 12px;
+    overflow-x: hidden;
+  }
+
+  #game-app {
+    width: 100%;
+    max-width: 820px;
+    background: var(--bg-card);
+    border: 3px solid #334155;
+    border-radius: 24px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7), 0 0 40px rgba(56, 189, 248, 0.15);
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-height: 620px;
+  }
+
+  /* Header & Dashboard */
+  .game-header {
+    background: #0f172a;
+    padding: 12px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid #334155;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 800;
+    font-size: 1.25rem;
+    color: var(--accent-yellow);
+    letter-spacing: 0.5px;
+  }
+
+  .brand-icon {
+    width: 32px;
+    height: 32px;
+  }
+
+  .stats-bar {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    font-size: 0.9rem;
+    font-weight: 700;
+  }
+
+  .stat-pill {
+    background: #1e293b;
+    padding: 6px 12px;
+    border-radius: 20px;
+    border: 1px solid #475569;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .sound-btn, .ctrl-btn {
+    background: #334155;
+    border: none;
+    color: white;
+    padding: 6px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+  }
+
+  .sound-btn:hover, .ctrl-btn:hover {
+    background: #475569;
+    transform: scale(1.05);
+  }
+
+  /* Screens Management */
+  .screen {
+    display: none;
+    flex-direction: column;
+    flex: 1;
+    padding: 24px;
+    position: relative;
+    animation: fadeIn 0.3s ease-out;
+  }
+
+  .screen.active {
+    display: flex;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Welcome Screen */
+  .hero-section {
+    text-align: center;
+    margin: auto 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .toast-mascot {
+    width: 140px;
+    height: 140px;
+    animation: floatMascot 3s ease-in-out infinite;
+  }
+
+  @keyframes floatMascot {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-12px) rotate(4deg); }
+  }
+
+  h1.game-title {
+    font-size: 2.4rem;
+    font-weight: 900;
+    background: linear-gradient(135deg, #fbbf24 0%, #f97316 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    line-height: 1.1;
+  }
+
+  .tagline {
+    color: var(--text-muted);
+    font-size: 1.05rem;
+    max-width: 500px;
+  }
+
+  .nickname-box {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+    max-width: 320px;
+    margin-top: 8px;
+  }
+
+  .input-label {
+    font-size: 0.85rem;
+    color: var(--accent-blue);
+    font-weight: 600;
+    text-align: left;
+  }
+
+  input.nick-input {
+    background: #0f172a;
+    border: 2px solid #475569;
+    border-radius: 12px;
+    padding: 12px 16px;
+    color: white;
+    font-size: 1.1rem;
+    text-align: center;
+    outline: none;
+    font-weight: bold;
+    transition: border-color 0.2s;
+  }
+
+  input.nick-input:focus {
+    border-color: var(--accent-yellow);
+    box-shadow: 0 0 10px rgba(251, 191, 36, 0.3);
+  }
+
+  .rules-card {
+    background: #111827;
+    border: 1px solid #374151;
+    border-radius: 16px;
+    padding: 14px;
+    font-size: 0.88rem;
+    color: #cbd5e1;
+    max-width: 550px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    text-align: left;
+  }
+
+  .rule-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  /* Action Buttons */
+  .btn {
+    background: linear-gradient(135deg, #eab308 0%, #d97706 100%);
+    color: #0f172a;
+    font-weight: 800;
+    font-size: 1.2rem;
+    padding: 14px 32px;
+    border: none;
+    border-radius: 14px;
+    cursor: pointer;
+    box-shadow: 0 6px 0 #92400e, 0 10px 20px rgba(0,0,0,0.3);
+    transition: all 0.1s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 0 #92400e, 0 12px 25px rgba(0,0,0,0.4);
+  }
+
+  .btn:active {
+    transform: translateY(4px);
+    box-shadow: 0 2px 0 #92400e;
+  }
+
+  .btn-sm {
+    font-size: 0.95rem;
+    padding: 8px 16px;
+    box-shadow: 0 3px 0 #92400e;
+  }
+
+  .btn-sm:active {
+    box-shadow: 0 1px 0 #92400e;
+  }
+
+  .btn-outline {
+    background: transparent;
+    color: white;
+    border: 2px solid #475569;
+    box-shadow: none;
+  }
+  .btn-outline:hover {
+    background: #334155;
+    transform: none;
+    box-shadow: none;
+  }
+
+  /* In-Game Heads-Up Display */
+  .hud {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+    background: #0f172a;
+    padding: 12px 16px;
+    border-radius: 16px;
+    border: 1px solid #334155;
+    margin-bottom: 16px;
+  }
+
+  .hud-box {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .hud-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    font-weight: 700;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .progress-wrap {
+    height: 12px;
+    background: #1e293b;
+    border-radius: 6px;
+    overflow: hidden;
+    position: relative;
+    border: 1px solid #334155;
+  }
+
+  .progress-bar {
+    height: 100%;
+    transition: width 0.3s ease, background 0.3s ease;
+  }
+
+  .timer-bar {
+    background: linear-gradient(90deg, #10b981, #f59e0b, #ef4444);
+    width: 100%;
+  }
+
+  .stress-bar {
+    background: #ef4444;
+    width: 0%;
+  }
+
+  .energy-bar {
+    background: #38bdf8;
+    width: 100%;
+  }
+
+  /* Stage Content Area */
+  .stage-box {
+    background: #111827;
+    border: 2px solid #334155;
+    border-radius: 20px;
+    padding: 20px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    position: relative;
+  }
+
+  .toast-avatar-container {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: #1e293b;
+    padding: 12px 18px;
+    border-radius: 16px;
+    border-left: 6px solid var(--accent-yellow);
+    margin-bottom: 16px;
+  }
+
+  .avatar-toast {
+    width: 54px;
+    height: 54px;
+    flex-shrink: 0;
+  }
+
+  .dialogue-text {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: #f1f5f9;
+    line-height: 1.35;
+  }
+
+  .dialogue-author {
+    font-size: 0.75rem;
+    color: var(--accent-yellow);
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 2px;
+  }
+
+  /* Scenario / Interactive Challenge Views */
+  .challenge-area {
+    margin: auto 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .scenario-title {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--text-main);
+    text-align: center;
+    margin-bottom: 4px;
+  }
+
+  .options-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .option-btn {
+    background: #1e293b;
+    border: 2px solid #334155;
+    color: white;
+    padding: 14px 16px;
+    border-radius: 14px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.15s ease;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    line-height: 1.3;
+  }
+
+  .option-btn:hover {
+    background: #29354d;
+    border-color: var(--accent-blue);
+    transform: translateY(-2px);
+  }
+
+  .option-btn:active {
+    transform: translateY(1px);
+  }
+
+  .option-badge {
+    background: #334155;
+    color: var(--accent-yellow);
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+  }
+
+  /* Mini Reaction / Clicker Minigame inside Stage */
+  .canteen-queue-container {
+    background: #0f172a;
+    border: 2px dashed #475569;
+    border-radius: 16px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .queue-lane {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    width: 100%;
+    padding: 10px;
+    justify-content: center;
+  }
+
+  .food-target {
+    width: 60px;
+    height: 60px;
+    background: #1e293b;
+    border: 2px solid var(--accent-yellow);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    cursor: pointer;
+    transition: transform 0.1s;
+    animation: pulseTarget 1s infinite alternate;
+  }
+
+  .food-target:hover {
+    transform: scale(1.15);
+  }
+
+  @keyframes pulseTarget {
+    from { box-shadow: 0 0 5px rgba(251, 191, 36, 0.4); }
+    to { box-shadow: 0 0 15px rgba(251, 191, 36, 0.9); }
+  }
+
+  /* Feedback Overlay Animation */
+  .feedback-banner {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.7);
+    background: rgba(15, 23, 42, 0.95);
+    border: 3px solid var(--accent-yellow);
+    padding: 20px 30px;
+    border-radius: 20px;
+    text-align: center;
+    z-index: 100;
+    opacity: 0;
+    pointer-events: none;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.8);
+    transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    min-width: 280px;
+  }
+
+  .feedback-banner.show {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+
+  .feedback-title {
+    font-size: 1.6rem;
+    font-weight: 900;
+    margin-bottom: 6px;
+  }
+
+  .feedback-desc {
+    font-size: 0.95rem;
+    color: var(--text-muted);
+  }
+
+  /* Results Screen */
+  .result-card {
+    text-align: center;
+    margin: auto 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .badge-trophy {
+    font-size: 3.5rem;
+    animation: bounceTrophy 1.5s infinite alternate;
+  }
+
+  @keyframes bounceTrophy {
+    from { transform: scale(1); }
+    to { transform: scale(1.15) rotate(5deg); }
+  }
+
+  .player-rank-title {
+    font-size: 1.8rem;
+    font-weight: 900;
+    color: var(--accent-yellow);
+  }
+
+  .final-score-display {
+    font-size: 3rem;
+    font-weight: 900;
+    color: white;
+    text-shadow: 0 0 20px rgba(56, 189, 248, 0.6);
+  }
+
+  .score-breakdown {
+    background: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 16px;
+    padding: 14px 20px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    width: 100%;
+    max-width: 500px;
+  }
+
+  .breakdown-item {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .breakdown-val {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--accent-blue);
+  }
+
+  .breakdown-lbl {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+  }
+
+  .leaderboard-table {
+    width: 100%;
+    max-width: 500px;
+    background: #0f172a;
+    border-radius: 12px;
+    border: 1px solid #334155;
+    padding: 10px;
+    font-size: 0.85rem;
+  }
+
+  .lb-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 12px;
+    border-bottom: 1px solid #1e293b;
+  }
+  .lb-row:last-child {
+    border-bottom: none;
+  }
+  .lb-row.highlight {
+    background: #1e293b;
+    border-radius: 6px;
+    color: var(--accent-yellow);
+    font-weight: bold;
+  }
+
+  /* Responsive Adjustments */
+  @media (max-width: 600px) {
+    #game-app {
+      border-radius: 16px;
+      min-height: 580px;
+    }
+    .options-grid {
+      grid-template-columns: 1fr;
+    }
+    .rules-card {
+      grid-template-columns: 1fr;
+    }
+    h1.game-title {
+      font-size: 1.9rem;
+    }
+    .score-breakdown {
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+  }
+
+  /* Custom Floating Particles */
+  .toast-particle {
+    position: absolute;
+    pointer-events: none;
+    animation: floatUp 1s ease-out forwards;
+    font-size: 1.4rem;
+    z-index: 999;
+  }
+
+  @keyframes floatUp {
+    0% { opacity: 1; transform: translateY(0) scale(1); }
+    100% { opacity: 0; transform: translateY(-50px) scale(1.4); }
+  }
+</style>
+</head>
+<body>
+
+<div id="game-app">
+  <!-- Top Global Header -->
+  <header class="game-header">
+    <div class="brand">
+      <!-- FunToast SVG Toast Mascot Icon -->
+      <svg class="brand-icon" viewBox="0 0 100 100">
+        <rect x="15" y="25" width="70" height="65" rx="15" fill="#f59e0b" stroke="#78350f" stroke-width="6"/>
+        <path d="M 10 35 C 10 15, 90 15, 90 35 Z" fill="#d97706" stroke="#78350f" stroke-width="6"/>
+        <!-- Butter Cube -->
+        <rect x="38" y="42" width="24" height="18" rx="4" fill="#fef08a" stroke="#ca8a04" stroke-width="2"/>
+        <!-- Happy Face -->
+        <circle cx="34" cy="62" r="4" fill="#451a03"/>
+        <circle cx="66" cy="62" r="4" fill="#451a03"/>
+        <path d="M 42 70 Q 50 78 58 70" fill="none" stroke="#451a03" stroke-width="3" stroke-linecap="round"/>
+        <!-- Blushing Cheeks -->
+        <circle cx="28" cy="68" r="4" fill="#f87171" opacity="0.6"/>
+        <circle cx="72" cy="68" r="4" fill="#f87171" opacity="0.6"/>
+      </svg>
+      <span>FunToast</span>
+    </div>
+
+    <div class="stats-bar">
+      <div class="stat-pill" id="header-score-pill" style="display: none;">
+        <span>🏆</span>
+        <span id="live-score">0</span>
+      </div>
+      <button class="sound-btn" id="sound-toggle" title="Toggle Sound">🔊 Audio: ON</button>
+      <button class="ctrl-btn" id="pause-btn" style="display: none;">⏸️</button>
+    </div>
+  </header>
+
+  <!-- Screen 1: Welcome & Nickname Screen -->
+  <section class="screen active" id="screen-welcome">
+    <div class="hero-section">
+      <!-- Big Animated Toast Mascot -->
+      <svg class="toast-mascot" viewBox="0 0 100 100">
+        <rect x="15" y="25" width="70" height="65" rx="16" fill="#fbbf24" stroke="#92400e" stroke-width="5"/>
+        <path d="M 10 32 C 10 10, 90 10, 90 32 Z" fill="#f59e0b" stroke="#92400e" stroke-width="5"/>
+        <!-- Melting Butter -->
+        <rect x="36" y="38" width="28" height="20" rx="5" fill="#fef08a" stroke="#ca8a04" stroke-width="2"/>
+        <!-- Big Eyes & Wink -->
+        <circle cx="35" cy="58" r="5" fill="#451a03"/>
+        <path d="M 60 58 Q 67 52 74 58" fill="none" stroke="#451a03" stroke-width="4" stroke-linecap="round"/>
+        <path d="M 40 72 Q 50 82 60 72" fill="#ef4444" stroke="#451a03" stroke-width="3" stroke-linejoin="round"/>
+        <!-- Kawaii cheeks -->
+        <circle cx="25" cy="66" r="6" fill="#fb7185" opacity="0.7"/>
+        <circle cx="75" cy="66" r="6" fill="#fb7185" opacity="0.7"/>
+      </svg>
+
+      <h1 class="game-title">FunToast: Poly Life Survival</h1>
+      <p class="tagline">Survive deadlines, ghosting teammates, dodgy campus Wi-Fi, and the legendary 12:00 PM canteen queue!</p>
+
+      <div class="nickname-box">
+        <label class="input-label" for="player-nickname">STUDENT ID / NICKNAME</label>
+        <input type="text" id="player-nickname" class="nick-input" placeholder="e.g. ToastMaster99" maxlength="14" autocomplete="off" value="KayaToastLover">
+      </div>
+
+      <div class="rules-card">
+        <div class="rule-item"><span>🍞</span> <strong>Stay Toasty:</strong> Dodge high stress & low caffeine.</div>
+        <div class="rule-item"><span>⚡</span> <strong>Quick Decisions:</strong> Beat the timer for bonus points.</div>
+        <div class="rule-item"><span>👥</span> <strong>Group Project:</strong> Handle the freeloading team.</div>
+        <div class="rule-item"><span>🏆</span> <strong>Leaderboard:</strong> Claim the 'Honorary Toast Graduate' crown!</div>
+      </div>
+
+      <button class="btn" id="start-game-btn">START SURVIVAL</button>
+    </div>
+  </section>
+
+  <!-- Screen 2: Main Interactive Gameplay Screen -->
+  <section class="screen" id="screen-gameplay">
+    <!-- Heads-Up Status Displays -->
+    <div class="hud">
+      <div class="hud-box">
+        <div class="hud-label">
+          <span>⏳ Time Left</span>
+          <span id="timer-text">15s</span>
+        </div>
+        <div class="progress-wrap">
+          <div class="progress-bar timer-bar" id="timer-bar"></div>
+        </div>
+      </div>
+
+      <div class="hud-box">
+        <div class="hud-label">
+          <span>🧠 Stress Meter</span>
+          <span id="stress-text">10%</span>
+        </div>
+        <div class="progress-wrap">
+          <div class="progress-bar stress-bar" id="stress-bar"></div>
+        </div>
+      </div>
+
+      <div class="hud-box">
+        <div class="hud-label">
+          <span>☕ Energy / GPA</span>
+          <span id="energy-text">100%</span>
+        </div>
+        <div class="progress-wrap">
+          <div class="progress-bar energy-bar" id="energy-bar"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Active Stage / Dialogue / Minigame Container -->
+    <div class="stage-box" id="stage-box">
+      <!-- NPC Toast Talker -->
+      <div class="toast-avatar-container">
+        <div class="avatar-toast" id="avatar-svg-slot">
+          <!-- Dynamic SVG Face generated via JS -->
+        </div>
+        <div>
+          <div class="dialogue-author" id="dialogue-speaker">LECTURER DR. TAN</div>
+          <div class="dialogue-text" id="dialogue-quote">"Class, the 40% submission portal closes in 2 minutes. Where is your slides?"</div>
+        </div>
+      </div>
+
+      <!-- Challenge / Questions Dynamic View -->
+      <div class="challenge-area" id="challenge-container">
+        <!-- Rendered by JS: Multiple Choice or Speed Clicker -->
+      </div>
+    </div>
+
+    <!-- Action feedback flash banner -->
+    <div class="feedback-banner" id="feedback-banner">
+      <div class="feedback-title" id="fb-title">AWESOME!</div>
+      <div class="feedback-desc" id="fb-desc">+150 XP • Stress Decreased!</div>
+    </div>
+  </section>
+
+  <!-- Screen 3: Results & Leaderboard Screen -->
+  <section class="screen" id="screen-results">
+    <div class="result-card">
+      <div class="badge-trophy" id="trophy-emoji">🎓</div>
+      <div class="player-rank-title" id="final-title">Honorary Toast Valedictorian</div>
+      <div class="final-score-display" id="final-score">0 PTS</div>
+
+      <div class="score-breakdown">
+        <div class="breakdown-item">
+          <span class="breakdown-val" id="stat-accuracy">100%</span>
+          <span class="breakdown-lbl">Survival IQ</span>
+        </div>
+        <div class="breakdown-item">
+          <span class="breakdown-val" id="stat-stress-lvl">Low</span>
+          <span class="breakdown-lbl">Final Stress</span>
+        </div>
+        <div class="breakdown-item">
+          <span class="breakdown-val" id="stat-stage-cleared">3 / 3</span>
+          <span class="breakdown-lbl">Chapters Cleared</span>
+        </div>
+      </div>
+
+      <!-- Local Leaderboard -->
+      <div class="leaderboard-table" id="leaderboard-list">
+        <div style="font-weight: bold; margin-bottom: 6px; color: var(--accent-blue);">🏆 CAMPUS HIGH SCORES</div>
+        <div id="leaderboard-rows"></div>
+      </div>
+
+      <div style="display: flex; gap: 12px; margin-top: 8px;">
+        <button class="btn" id="play-again-btn">REPLAY GAME</button>
+        <button class="btn btn-outline" id="menu-btn">MAIN MENU</button>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+/**
+ * FunToast Game Engine
+ * Completely self-contained, offline-ready HTML5 Game.
+ * Features: Web Audio synthesizer SFX, LocalStorage persistence with fallback,
+ * Dynamic procedural stages, and responsive polytechnic life comedy scenarios.
+ */
+
+// --- 1. Synthesized Audio Engine (No external files needed) ---
+class AudioController {
+  constructor() {
+    this.ctx = null;
+    this.enabled = true;
+  }
+
+  init() {
+    if (!this.ctx) {
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (AudioContext) {
+        this.ctx = new AudioContext();
+      }
+    }
+    if (this.ctx && this.ctx.state === 'suspended') {
+      this.ctx.resume();
+    }
+  }
+
+  playBeep(freq = 440, type = 'sine', duration = 0.12, gain = 0.1) {
+    if (!this.enabled || !this.ctx) return;
+    try {
+      const osc = this.ctx.createOscillator();
+      const gainNode = this.ctx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+      gainNode.gain.setValueAtTime(gain, this.ctx.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
+      osc.connect(gainNode);
+      gainNode.connect(this.ctx.destination);
+      osc.start();
+      osc.stop(this.ctx.currentTime + duration);
+    } catch (e) {
+      // Audio fallback silent
+    }
+  }
+
+  playSuccess() {
+    if (!this.enabled || !this.ctx) return;
+    this.playBeep(523.25, 'triangle', 0.1, 0.15); // C5
+    setTimeout(() => this.playBeep(659.25, 'triangle', 0.1, 0.15), 90); // E5
+    setTimeout(() => this.playBeep(783.99, 'triangle', 0.2, 0.15), 180); // G5
+    setTimeout(() => this.playBeep(1046.50, 'triangle', 0.35, 0.2), 270); // C6
+  }
+
+  playWrong() {
+    if (!this.enabled || !this.ctx) return;
+    this.playBeep(220, 'sawtooth', 0.2, 0.15);
+    setTimeout(() => this.playBeep(160, 'sawtooth', 0.35, 0.18), 120);
+  }
+
+  playClick() {
+    this.playBeep(600, 'sine', 0.04, 0.08);
+  }
+
+  playCrunch() {
+    if (!this.enabled || !this.ctx) return;
+    this.playBeep(320, 'square', 0.08, 0.1);
+    setTimeout(() => this.playBeep(480, 'square', 0.08, 0.1), 60);
+  }
+}
+
+const audio = new AudioController();
+
+// --- 2. High Score Storage (with safe in-memory fallback) ---
+class ScoreStore {
+  constructor() {
+    this.fallbackScores = [
+      { name: "CoffeeKaya", score: 2400, rank: "Toast Legend" },
+      { name: "SleepyPoly", score: 1850, rank: "Canteen Survivor" },
+      { name: "LastMinRush", score: 1200, rank: "Wi-Fi Blamer" }
+    ];
+  }
+
+  getScores() {
+    try {
+      const data = localStorage.getItem('funtoast_scores');
+      if (data) {
+        return JSON.parse(data);
+      }
+    } catch (e) {
+      // localStorage disabled or not supported
+    }
+    return this.fallbackScores;
+  }
+
+  saveScore(name, score, rank) {
+    let list = this.getScores();
+    list.push({ name: name || 'Anonymous Toast', score: score, rank: rank });
+    list.sort((a, b) => b.score - a.score);
+    list = list.slice(0, 5); // top 5
+    try {
+      localStorage.setItem('funtoast_scores', JSON.stringify(list));
+    } catch (e) {
+      this.fallbackScores = list;
+    }
+    return list;
+  }
+}
+
+const scoreStore = new ScoreStore();
+
+// --- 3. Scenarios & Level Content ---
+const SCENARIO_DATABASE = [
+  // CHAPTER 1: The Group Project Crisis
+  {
+    chapter: 1,
+    title: "Chapter 1: The Freeloading Teammate",
+    speaker: "TEAMMATE JASON",
+    face: "sleepy",
+    dialogue: '"Hey bro, I had a headache so I couldn\'t do my part for the 50-slide presentation. Can you help me write my 20 slides? Meeting in 10 mins!"',
+    type: "choice",
+    options: [
+      { text: "Assign him to click the 'Next Slide' button during presentation", score: 350, stress: -10, energy: 10, correct: true, feedback: "Pro Move! Jason accepted and felt very important." },
+      { text: "Do all 20 slides yourself while drinking 4 cans of energy drink", score: 100, stress: 30, energy: -30, correct: false, feedback: "You survived, but your eye is twitching uncontrollably." },
+      { text: "Rant in the group chat using 45 passive-aggressive stickers", score: 150, stress: 10, energy: -10, correct: false, feedback: "Jason replied with 'k' and went back to sleep." },
+      { text: "Convince ChatGPT to generate slides in Singapore Singlish", score: 300, stress: -5, energy: 5, correct: true, feedback: "Genius! Lecturer remarked on your 'grounded local nuance'." }
+    ]
+  },
+  {
+    chapter: 1,
+    title: "Chapter 1: The Last Minute Submission Glitch",
+    speaker: "CAMPUS WI-FI PORTAL",
+    face: "glitch",
+    dialogue: '"Error 404: Submissions closed at 23:59:00. Your clock shows 23:58:59. Upload failed due to campus thunderstorm!"',
+    type: "choice",
+    options: [
+      { text: "Switch to 5G hotspot and email the lecturer immediately with timestamp screenshot", score: 400, stress: -15, energy: -5, correct: true, feedback: "Proof secured! Dr. Tan gave you the green light." },
+      { text: "Smash the F5 key 140 times until the laptop gets hot enough to toast bread", score: 50, stress: 35, energy: -20, correct: false, feedback: "Your laptop crashed. Now both Wi-Fi and PC are toast." },
+      { text: "Blame solar flares and coronal mass ejections in an apology email", score: 120, stress: 15, energy: 0, correct: false, feedback: "Dr. Tan teaches physics. He saw right through you." },
+      { text: "Rename a corrupted .txt file to 'Project_Final_v9_REAL.pdf' to buy 12 hours", score: 250, stress: 10, energy: 0, correct: true, feedback: "Sneaky! Lecturer replied: 'File cannot open, please resubmit by 9am!'" }
+    ]
+  },
+  // CHAPTER 2: The Monday 8:00 AM Lecture & Canteen Rush
+  {
+    chapter: 2,
+    title: "Chapter 2: The 8:00 AM Front Row Ambush",
+    speaker: "LECTURER DR. TAN",
+    face: "lecturer",
+    dialogue: '"Good morning class! Since the back rows are empty, everyone in front must answer a pop question: What is the fastest way to debug a infinite loop?"',
+    type: "choice",
+    options: [
+      { text: "Add console.log('HERE 1'), console.log('HERE 2') everywhere", score: 350, stress: -10, energy: 5, correct: true, feedback: "The ancient universal debugging ritual never fails!" },
+      { text: "Stare deeply into the lecturer's eyes without blinking until he moves on", score: 100, stress: 25, energy: -15, correct: false, feedback: "Awkward silence lasted 45 seconds. Dr. Tan called you out." },
+      { text: "Turn off the monitor and say 'It works in the metaverse'", score: 80, stress: 30, energy: -10, correct: false, feedback: "Zero marks given, but the lecture hall laughed." },
+      { text: "Step through with breakpoints and explain the exit condition clearly", score: 400, stress: -20, energy: 10, correct: true, feedback: "Dr. Tan smiled! 'A student of true culture!' +400 XP" }
+    ]
+  },
+  {
+    chapter: 2,
+    title: "Chapter 2: The Canteen Speed Eating Challenge",
+    speaker: "CANTEEN AUNTIE",
+    face: "auntie",
+    dialogue: '"Boy/Girl, 15 minutes left before next class! Grab as much Kaya Toast & Teh-C as you can before the bell!"',
+    type: "minigame", // Interactive clicker minigame
+    targetCount: 8,
+    timeLimit: 8
+  },
+  // CHAPTER 3: The Final Viva Presentation
+  {
+    chapter: 3,
+    title: "Chapter 3: The Final Exam Project Defence",
+    speaker: "EXTERNAL EXAMINER",
+    face: "strict",
+    dialogue: '"Your demo threw an unexpected NullPointerException on screen. Explain why we should still give you an A grade."',
+    type: "choice",
+    options: [
+      { text: '"That\'s not a bug, it\'s an unannounced security feature!"', score: 380, stress: -10, energy: 5, correct: true, feedback: "Examiner chuckled at your audacity and gave partial credit!" },
+      { text: 'Pretend your mic is lagging and lip-sync with delayed sound', score: 200, stress: 15, energy: -5, correct: false, feedback: "You forgot your camera was 60 FPS in person. Busted." },
+      { text: 'Demonstrate the exact fallback and graceful recovery mechanism you designed', score: 500, stress: -25, energy: 20, correct: true, feedback: "PERFECT! Flawless engineering recovery under pressure!" },
+      { text: 'Offer the examiner a warm fresh Kaya Butter Toast slice', score: 350, stress: -10, energy: 15, correct: true, feedback: "Food diplomacy wins again! Toast makes everyone happy." }
+    ]
+  }
+];
+
+// --- 4. Game State & Logic Controller ---
+class FunToastGame {
+  constructor() {
+    this.playerName = "KayaToastLover";
+    this.score = 0;
+    this.stress = 10;
+    this.energy = 100;
+    this.currentStageIdx = 0;
+    this.correctAnswers = 0;
+    this.totalQuestions = 0;
+    this.timer = null;
+    this.timeLeft = 15;
+    this.isPaused = false;
+    this.minigameClicks = 0;
+
+    // DOM bindings
+    this.dom = {
+      screenWelcome: document.getElementById('screen-welcome'),
+      screenGameplay: document.getElementById('screen-gameplay'),
+      screenResults: document.getElementById('screen-results'),
+      startBtn: document.getElementById('start-game-btn'),
+      playAgainBtn: document.getElementById('play-again-btn'),
+      menuBtn: document.getElementById('menu-btn'),
+      soundToggle: document.getElementById('sound-toggle'),
+      pauseBtn: document.getElementById('pause-btn'),
+      nickInput: document.getElementById('player-nickname'),
+      headerScorePill: document.getElementById('header-score-pill'),
+      liveScore: document.getElementById('live-score'),
+      timerText: document.getElementById('timer-text'),
+      timerBar: document.getElementById('timer-bar'),
+      stressText: document.getElementById('stress-text'),
+      stressBar: document.getElementById('stress-bar'),
+      energyText: document.getElementById('energy-text'),
+      energyBar: document.getElementById('energy-bar'),
+      dialogueSpeaker: document.getElementById('dialogue-speaker'),
+      dialogueQuote: document.getElementById('dialogue-quote'),
+      avatarSvgSlot: document.getElementById('avatar-svg-slot'),
+      challengeContainer: document.getElementById('challenge-container'),
+      feedbackBanner: document.getElementById('feedback-banner'),
+      fbTitle: document.getElementById('fb-title'),
+      fbDesc: document.getElementById('fb-desc'),
+      finalTitle: document.getElementById('final-title'),
+      finalScore: document.getElementById('final-score'),
+      statAccuracy: document.getElementById('stat-accuracy'),
+      statStressLvl: document.getElementById('stat-stress-lvl'),
+      statStageCleared: document.getElementById('stat-stage-cleared'),
+      leaderboardRows: document.getElementById('leaderboard-rows'),
+      trophyEmoji: document.getElementById('trophy-emoji')
+    };
+
+    this.bindEvents();
+  }
+
+  bindEvents() {
+    this.dom.startBtn.addEventListener('click', () => {
+      audio.init();
+      audio.playClick();
+      this.playerName = this.dom.nickInput.value.trim() || 'LuckyToast';
+      this.startGame();
+    });
+
+    this.dom.playAgainBtn.addEventListener('click', () => {
+      audio.playClick();
+      this.startGame();
+    });
+
+    this.dom.menuBtn.addEventListener('click', () => {
+      audio.playClick();
+      this.showScreen('welcome');
+    });
+
+    this.dom.soundToggle.addEventListener('click', () => {
+      audio.init();
+      audio.enabled = !audio.enabled;
+      this.dom.soundToggle.textContent = audio.enabled ? "🔊 Audio: ON" : "🔇 Audio: OFF";
+      audio.playClick();
+    });
+
+    this.dom.pauseBtn.addEventListener('click', () => {
+      this.togglePause();
+    });
+  }
+
+  showScreen(screenName) {
+    this.dom.screenWelcome.classList.remove('active');
+    this.dom.screenGameplay.classList.remove('active');
+    this.dom.screenResults.classList.remove('active');
+
+    if (screenName === 'welcome') {
+      this.dom.screenWelcome.classList.add('active');
+      this.dom.headerScorePill.style.display = 'none';
+      this.dom.pauseBtn.style.display = 'none';
+    } else if (screenName === 'gameplay') {
+      this.dom.screenGameplay.classList.add('active');
+      this.dom.headerScorePill.style.display = 'flex';
+      this.dom.pauseBtn.style.display = 'inline-flex';
+    } else if (screenName === 'results') {
+      this.dom.screenResults.classList.add('active');
+      this.dom.headerScorePill.style.display = 'flex';
+      this.dom.pauseBtn.style.display = 'none';
+    }
+  }
+
+  togglePause() {
+    this.isPaused = !this.isPaused;
+    this.dom.pauseBtn.textContent = this.isPaused ? "▶️" : "⏸️";
+    if (this.isPaused) {
+      this.showFeedback("PAUSED", "Game is temporarily paused.", "#38bdf8");
+    } else {
+      this.hideFeedback();
+    }
+  }
+
+  startGame() {
+    this.score = 0;
+    this.stress = 10;
+    this.energy = 100;
+    this.currentStageIdx = 0;
+    this.correctAnswers = 0;
+    this.totalQuestions = 0;
+    this.isPaused = false;
+    this.updateHUD();
+    this.showScreen('gameplay');
+    this.loadStage();
+  }
+
+  updateHUD() {
+    // Clamp limits
+    this.stress = Math.max(0, Math.min(100, this.stress));
+    this.energy = Math.max(0, Math.min(100, this.energy));
+
+    this.dom.liveScore.textContent = this.score;
+    this.dom.stressText.textContent = `${this.stress}%`;
+    this.dom.stressBar.style.width = `${this.stress}%`;
+
+    this.dom.energyText.textContent = `${this.energy}%`;
+    this.dom.energyBar.style.width = `${this.energy}%`;
+
+    // Check game-over condition from extreme burnout
+    if (this.stress >= 100 || this.energy <= 0) {
+      this.endGame(true);
+    }
+  }
+
+  renderAvatar(faceType) {
+    let eyeLeft = `<circle cx="35" cy="55" r="5" fill="#451a03"/>`;
+    let eyeRight = `<circle cx="65" cy="55" r="5" fill="#451a03"/>`;
+    let mouth = `<path d="M 40 68 Q 50 78 60 68" fill="none" stroke="#451a03" stroke-width="4" stroke-linecap="round"/>`;
+    let extra = '';
+
+    if (faceType === 'sleepy') {
+      eyeLeft = `<path d="M 30 55 Q 37 50 44 55" stroke="#451a03" stroke-width="3" fill="none"/>`;
+      eyeRight = `<path d="M 56 55 Q 63 50 70 55" stroke="#451a03" stroke-width="3" fill="none"/>`;
+      mouth = `<circle cx="50" cy="70" r="4" fill="#451a03"/>`;
+      extra = `<text x="70" y="35" font-size="14" fill="#a855f7" font-weight="bold">Zzz</text>`;
+    } else if (faceType === 'glitch') {
+      eyeLeft = `<rect x="30" y="50" width="10" height="10" fill="#ef4444"/>`;
+      eyeRight = `<rect x="60" y="50" width="10" height="10" fill="#38bdf8"/>`;
+      mouth = `<path d="M 35 70 L 65 70" stroke="#ef4444" stroke-width="4"/>`;
+      extra = `<text x="15" y="30" font-size="10" fill="#f43f5e" font-weight="bold">&lt;ERR&gt;</text>`;
+    } else if (faceType === 'lecturer') {
+      extra = `<rect x="28" y="48" width="44" height="14" rx="4" fill="none" stroke="#000" stroke-width="2"/>
+               <line x1="48" y1="54" x2="52" y2="54" stroke="#000" stroke-width="2"/>`;
+    } else if (faceType === 'auntie') {
+      extra = `<path d="M 25 35 Q 50 15 75 35" fill="none" stroke="#ec4899" stroke-width="6"/>`;
+      mouth = `<path d="M 38 66 Q 50 82 62 66" fill="#f43f5e" stroke="#451a03" stroke-width="2"/>`;
+    }
+
+    return `
+      <svg viewBox="0 0 100 100" style="width: 100%; height: 100%;">
+        <rect x="15" y="22" width="70" height="68" rx="14" fill="#fbbf24" stroke="#92400e" stroke-width="4"/>
+        <path d="M 12 30 C 12 12, 88 12, 88 30 Z" fill="#f59e0b" stroke="#92400e" stroke-width="4"/>
+        <rect x="38" y="34" width="24" height="16" rx="4" fill="#fef08a" stroke="#ca8a04" stroke-width="2"/>
+        ${eyeLeft}
+        ${eyeRight}
+        ${mouth}
+        ${extra}
+      </svg>
+    `;
+  }
+
+  loadStage() {
+    if (this.currentStageIdx >= SCENARIO_DATABASE.length) {
+      this.endGame(false);
+      return;
+    }
+
+    const currentScenario = SCENARIO_DATABASE[this.currentStageIdx];
+    this.dom.dialogueSpeaker.textContent = currentScenario.speaker;
+    this.dom.dialogueQuote.textContent = currentScenario.dialogue;
+    this.dom.avatarSvgSlot.innerHTML = this.renderAvatar(currentScenario.face);
+    this.dom.challengeContainer.innerHTML = '';
+
+    if (currentScenario.type === 'choice') {
+      this.totalQuestions++;
+      this.timeLeft = 15;
+      this.startTimer(15, () => this.handleTimeout());
+
+      const title = document.createElement('div');
+      title.className = 'scenario-title';
+      title.textContent = currentScenario.title;
+      this.dom.challengeContainer.appendChild(title);
+
+      const grid = document.createElement('div');
+      grid.className = 'options-grid';
+
+      const letters = ['A', 'B', 'C', 'D'];
+      currentScenario.options.forEach((opt, idx) => {
+        const btn = document.createElement('button');
+        btn.className = 'option-btn';
+        btn.innerHTML = `<span class="option-badge">${letters[idx]}</span> <span>${opt.text}</span>`;
+        btn.addEventListener('click', (e) => {
+          this.createFloatingToastParticle(e.clientX, e.clientY);
+          this.handleOptionSelection(opt);
+        });
+        grid.appendChild(btn);
+      });
+
+      this.dom.challengeContainer.appendChild(grid);
+    } else if (currentScenario.type === 'minigame') {
+      // Speed Clicker Minigame for Canteen
+      this.minigameClicks = 0;
+      this.timeLeft = currentScenario.timeLimit || 8;
+      const targetClicks = currentScenario.targetCount || 8;
+
+      const title = document.createElement('div');
+      title.className = 'scenario-title';
+      title.textContent = "🔥 Speed Reflex: Tap the Toast & Kopi Cups Fast!";
+      this.dom.challengeContainer.appendChild(title);
+
+      const miniBox = document.createElement('div');
+      miniBox.className = 'canteen-queue-container';
+      miniBox.innerHTML = `
+        <div style="font-weight: bold; color: var(--accent-yellow);">Gathered: <span id="click-counter">0</span> / ${targetClicks} Snacks</div>
+        <div class="queue-lane">
+          <div class="food-target" id="target-snack-1">🍞</div>
+          <div class="food-target" id="target-snack-2">☕</div>
+          <div class="food-target" id="target-snack-3">🧈</div>
+        </div>
+        <div style="font-size: 0.85rem; color: #94a3b8;">Click as fast as possible before Auntie closes the stall!</div>
+      `;
+      this.dom.challengeContainer.appendChild(miniBox);
+
+      const updateTarget = (e) => {
+        audio.playCrunch();
+        this.createFloatingToastParticle(e.clientX, e.clientY, "+☕");
+        this.minigameClicks++;
+        document.getElementById('click-counter').textContent = this.minigameClicks;
+
+        if (this.minigameClicks >= targetClicks) {
+          clearInterval(this.timer);
+          this.score += 450;
+          this.energy = Math.min(100, this.energy + 25);
+          this.stress = Math.max(0, this.stress - 15);
+          audio.playSuccess();
+          this.showFeedback("CANTEEN FEAST!", "+450 XP • Full Energy Restored!", "#10b981");
+          this.updateHUD();
+          setTimeout(() => {
+            this.currentStageIdx++;
+            this.loadStage();
+          }, 1400);
+        }
+      };
+
+      document.getElementById('target-snack-1').addEventListener('click', updateTarget);
+      document.getElementById('target-snack-2').addEventListener('click', updateTarget);
+      document.getElementById('target-snack-3').addEventListener('click', updateTarget);
+
+      this.startTimer(this.timeLeft, () => {
+        // Partial score if failed
+        const earned = this.minigameClicks * 40;
+        this.score += earned;
+        this.stress += 15;
+        audio.playWrong();
+        this.showFeedback("STALL CLOSED!", `You grabbed ${this.minigameClicks} items (+${earned} XP)`, "#f97316");
+        this.updateHUD();
+        setTimeout(() => {
+          this.currentStageIdx++;
+          this.loadStage();
+        }, 1400);
+      });
+    }
+  }
+
+  startTimer(seconds, onExpire) {
+    if (this.timer) clearInterval(this.timer);
+    const totalTime = seconds;
+    this.timeLeft = seconds;
+    this.dom.timerText.textContent = `${this.timeLeft}s`;
+    this.dom.timerBar.style.width = '100%';
+
+    this.timer = setInterval(() => {
+      if (this.isPaused) return;
+
+      this.timeLeft--;
+      this.dom.timerText.textContent = `${this.timeLeft}s`;
+      const pct = (this.timeLeft / totalTime) * 100;
+      this.dom.timerBar.style.width = `${pct}%`;
+
+      if (this.timeLeft <= 0) {
+        clearInterval(this.timer);
+        onExpire();
+      }
+    }, 1000);
+  }
+
+  handleOptionSelection(option) {
+    if (this.timer) clearInterval(this.timer);
+
+    this.score += option.score;
+    this.stress += option.stress;
+    this.energy += option.energy;
+
+    if (option.correct) {
+      this.correctAnswers++;
+      audio.playSuccess();
+      this.showFeedback("SUPERIOR BRAIN MOVE!", `${option.feedback} (+${option.score} XP)`, "#10b981");
+    } else {
+      audio.playWrong();
+      this.showFeedback("POLY MOMENT...", `${option.feedback} (+${option.score} XP)`, "#f97316");
+    }
+
+    this.updateHUD();
+
+    setTimeout(() => {
+      this.currentStageIdx++;
+      this.loadStage();
+    }, 1600);
+  }
+
+  handleTimeout() {
+    audio.playWrong();
+    this.stress += 25;
+    this.energy -= 15;
+    this.showFeedback("TIME OUT!", "You panicked and froze like butter in a freezer! (+0 XP)", "#ef4444");
+    this.updateHUD();
+
+    setTimeout(() => {
+      this.currentStageIdx++;
+      this.loadStage();
+    }, 1500);
+  }
+
+  showFeedback(title, desc, borderColor = '#fbbf24') {
+    this.dom.fbTitle.textContent = title;
+    this.dom.fbDesc.textContent = desc;
+    this.dom.feedbackBanner.style.borderColor = borderColor;
+    this.dom.feedbackBanner.classList.add('show');
+  }
+
+  hideFeedback() {
+    this.dom.feedbackBanner.classList.remove('show');
+  }
+
+  createFloatingToastParticle(x, y, text = "🍞") {
+    const el = document.createElement('div');
+    el.className = 'toast-particle';
+    el.textContent = text;
+    el.style.left = `${x || window.innerWidth / 2}px`;
+    el.style.top = `${y || window.innerHeight / 2}px`;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 1000);
+  }
+
+  endGame(burnedOut = false) {
+    if (this.timer) clearInterval(this.timer);
+    this.hideFeedback();
+
+    let title = "Honorary Toast Valedictorian";
+    let emoji = "🎓";
+
+    if (burnedOut) {
+      title = "Burnt Toast Extra Crispy (Overstressed)";
+      emoji = "🔥";
+      this.score = Math.max(0, this.score - 200);
+    } else if (this.score >= 1800) {
+      title = "Dean's List Toast Legend";
+      emoji = "👑";
+    } else if (this.score >= 1100) {
+      title = "Canteen Queue Survivor & Procrastination Pro";
+      emoji = "🥪";
+    } else {
+      title = "Certified Wi-Fi Blamer";
+      emoji = "🔌";
+    }
+
+    this.dom.finalTitle.textContent = title;
+    this.dom.trophyEmoji.textContent = emoji;
+    this.dom.finalScore.textContent = `${this.score} PTS`;
+
+    const accuracyPct = this.totalQuestions > 0 ? Math.round((this.correctAnswers / this.totalQuestions) * 100) : 100;
+    this.dom.statAccuracy.textContent = `${accuracyPct}%`;
+    this.dom.statStressLvl.textContent = this.stress > 60 ? "Crispy" : "Chill";
+    this.dom.statStageCleared.textContent = `${Math.min(3, this.currentStageIdx)} / 3`;
+
+    // Save and render High Score Leaderboard
+    const list = scoreStore.saveScore(this.playerName, this.score, title);
+    this.renderLeaderboard(list, this.playerName, this.score);
+
+    this.showScreen('results');
+    audio.playSuccess();
+  }
+
+  renderLeaderboard(scores, currentPlayer, currentScore) {
+    this.dom.leaderboardRows.innerHTML = '';
+    scores.forEach((item, idx) => {
+      const row = document.createElement('div');
+      const isCurrent = item.name === currentPlayer && item.score === currentScore;
+      row.className = `lb-row ${isCurrent ? 'highlight' : ''}`;
+      row.innerHTML = `
+        <span>#${idx + 1} ${item.name} <small style="color:#94a3b8">(${item.rank})</small></span>
+        <span>${item.score} pts</span>
+      `;
+      this.dom.leaderboardRows.appendChild(row);
+    });
+  }
+}
+
+// Initialize on DOM load
+window.addEventListener('DOMContentLoaded', () => {
+  window.funToastGame = new FunToastGame();
+});
+</script>
+</body>
+</html>
